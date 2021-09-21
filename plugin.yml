@@ -1,0 +1,6 @@
+---
+name: VietNamDongEconomy
+version: 0.0.1
+main: NguyenDuck\VietNamDongEconomy\Main
+api: 3.22.5
+...
