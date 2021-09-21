@@ -1,0 +1,9 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/NguyenDuck/VietNamDongEconomy
+build-by-default: true
+branches:
+- release
+- development
+projects:
+  VietNamDongEconomy:
+    path: ""
+...
