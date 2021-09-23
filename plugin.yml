@@ -1,9 +1,9 @@
 ---
 name: VietNamDongEconomy
 description: Thêm hệ thống tiền tệ với đơn vị là Việt Nam Đồng, hỗ trợ điều khiển bằng UI
-version: 0.0.1
+version: 0.0.3
 main: NguyenDuck\VietNamDongEconomy\Main
-api: 3.22.5
+api: 3.23.1
 
 commands:
   money:
