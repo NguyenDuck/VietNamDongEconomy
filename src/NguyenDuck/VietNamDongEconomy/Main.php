@@ -98,9 +98,6 @@ class Main extends PluginBase implements Listener
 					$sender->sendMessage("§l§cKhông Tìm Thấy Người Chơi ".$data[0]."!");
 					return;
 				}
-				try {
-					intval($data[1]);
-				} catch (Exception $e) {}
 				if (!is_int($data[1])) {
 					$sender->sendMessage("§l§cSố Tiền Bạn Đã Nhập Sai Định Dạng!");
 					return;
