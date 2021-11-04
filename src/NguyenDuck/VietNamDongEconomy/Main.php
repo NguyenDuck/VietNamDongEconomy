@@ -14,7 +14,7 @@ use pocketmine\command\{
 	Command,
 	CommandSender
 };
-use libs\jojoe77777\FormAPI\{
+use jojoe77777\FormAPI\{
 	SimpleForm,
 	ModalForm,
 	CustomForm
