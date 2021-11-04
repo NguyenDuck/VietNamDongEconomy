@@ -25,10 +25,12 @@ use function implode;
 
 class Main extends PluginBase implements Listener
 {
+	private static $instance;
 	private $database;
 
 	public function onEnable()
 	{
+		self::$instance = $this;
 		$this->database = new SQLite3($this->getDataFolder()."data.db");
 		$this->database->exec("CREATE TABLE IF NOT EXISTS players(username NOT NULL PRIMARY KEY, balance INT NOT NULL DEFAULT 0)");
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
@@ -37,6 +39,11 @@ class Main extends PluginBase implements Listener
 	public function onDisable()
 	{
 		$this->database->close();
+	}
+
+	public static function getInstance()
+	{
+		return self::$instance;
 	}
 
 	public function onCommand(CommandSender $sender, Command $command, $label, array $args): bool
@@ -76,10 +83,14 @@ class Main extends PluginBase implements Listener
 			}
 			return;
 		});
+		$balance = $this->getBalanceByName($sender->getName())->fetchArray(SQLITE3_ASSOC);
+		if (is_bool($balance)) {
+			$balance = ["balance" => 0];
+		}
 		$form->setTitle("§l§cGiao Diện Quản Lý Tiền");
 		$form->setContent(implode("\n", [
 			"§l§eTên: §b".$sender->getName(),
-			"§l§eSố Tiền Đang Có: §6".$this->getBalanceByName(strtolower($sender->getName()))->fetchArray()[0]." VNĐ"
+			"§l§eSố Tiền Đang Có: §6".$balance["balance"]." VNĐ"
 		]));
 		$form->addButton("§l§cChuyển Tiền Cho Người Chơi Khác");
 		$form->addButton("§l§cXem Bảng Xếp Hạng Đại Gia");
@@ -93,7 +104,7 @@ class Main extends PluginBase implements Listener
 	public function SendMoneyToPlayerForm(Player $sender)
 	{
 		$form = new CustomForm(function(Player $sender, $data){
-			if (count($data) == 2) {
+			if ($data && count($data) == 2) {
 				if (!$sender->getServer()->getPlayer($data[0])) {
 					$sender->sendMessage("§l§cKhông Tìm Thấy Người Chơi ".$data[0]."!");
 					return;
@@ -137,13 +148,13 @@ class Main extends PluginBase implements Listener
 	public function EditMoneyPlayerForm(Player $sender)
 	{
 		$form = new CustomForm(function(Player $sender, $data){
-			if (count($data) == 3) {
+			if ($data && count($data) == 3) {
 				if (!$sender->getServer()->getPlayer($data[0])) {
 					$sender->sendMessage("§l§cKhông Tìm Thấy Người Chơi ".$data[0]."!");
 					return;
 				}
-				$this->setMoney($data[1], $data[0], intval($data[2]));
-				$sender->sendMessage("§l§aThành Công!");
+				$status = $this->setMoney($data[1], $data[0], intval($data[2]));
+				$sender->sendMessage($status);
 			}
 			return;
 		});
@@ -164,9 +175,9 @@ class Main extends PluginBase implements Listener
 		return $this->database->query("SELECT balance FROM 'players' WHERE username=='".$name."'");
 	}
 
-	public function getHighestMoney(int $limit = 5)
+	public function getHighestMoney(int $limit = 100)
 	{
-		return $this->database->query("SELECT * FROM 'players' ORDER BY balance DESC LIMIT 100");
+		return $this->database->query("SELECT * FROM 'players' ORDER BY balance DESC LIMIT ".strval($limit));
 	}
 
 	public function transferMoney(string $source, string $dest, int $quantity)
@@ -177,13 +188,18 @@ class Main extends PluginBase implements Listener
 		$this->database->exec("UPDATE 'players' SET balance = ".$destCalculated." WHERE username = '".$dest."'");
 	}
 
-	public function setMoney(bool $mode, string $dest, int $quantity)
+	public function setMoney(bool $mode, string $dest, int $quantity): string
 	{
+		$balance = $this->getBalanceByName($dest)->fetchArray(SQLITE3_ASSOC)["balance"];
+		$destCalculated = $balance + $quantity;
 		if (!$mode) {
-			$destCalculated = $this->getBalanceByName($dest)->fetchArray(SQLITE3_ASSOC)["balance"] + $quantity;
+			if ($destCalculated < 0) {
+				return "§l§cBạn Không Thể Trừ Quá Số Tiền Đang Có Trong Tài Khoản!";
+			}
 			$this->database->exec("UPDATE 'players' SET balance = ".$destCalculated." WHERE username = '".$dest."'");
 		} else {
 			$this->database->exec("UPDATE 'players' SET balance = ".$quantity." WHERE username = '".$dest."'");
 		}
+		return "§l§aThành Công!";
 	}
 }
